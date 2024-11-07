@@ -1,4 +1,5 @@
 # run: python setup.py install
+# requires gcc version>9 (module load gcc/11.2.0)
 
 from setuptools import setup, Extension
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension

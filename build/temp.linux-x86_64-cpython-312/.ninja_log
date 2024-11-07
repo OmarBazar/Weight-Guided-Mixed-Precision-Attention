@@ -1,0 +1,11 @@
+# ninja log v5
+0	15859	1730943004	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cu_spmm.o	8861cb7cc84640ee
+0	47949	1730943036	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cuSPMM.o	10e4e3777a29e87e
+44	15928	1730943053	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cu_dummy.o	f19a1089a53e7175
+44	46663	1730943083	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cuSPMM.o	46b4071067630daf
+48	56502	1731008172	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cuSPMM.o	10e4e3777a29e87e
+157	19793	1731008315	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cu_spmm.o	8861cb7cc84640ee
+42	57465	1731008373	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cuSPMM.o	46b4071067630daf
+162	19814	1731008545	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cu_spmm.o	8861cb7cc84640ee
+160	57849	1731008583	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cuSPMM.o	10e4e3777a29e87e
+46	56902	1731008641	/data/homezvol1/obazarba/Weight-Guided-Mixed-Precision-Attention/build/temp.linux-x86_64-cpython-312/cuSPMM.o	46b4071067630daf

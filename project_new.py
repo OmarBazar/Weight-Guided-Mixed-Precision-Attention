@@ -44,21 +44,22 @@ H = 6
 A = torch.rand((H, N, N), device="cuda", dtype=torch.float32)
 V = torch.rand((H, N, M), device="cuda", dtype=torch.float32)
 
-# Profiling parameters
+# # Profiling parameters
 num_warmup = 10
 num_trials = 500
 
 def cspmm(A, V):
+    print(A.shape, V.shape)
     N = A.shape[1]
     M = V.shape[2]
     K = 3
     H = A.shape[0]
     top_k_values, top_k_indices = torch.topk(A, K, dim=2)
-    # print(top_k_values.shape)
+    print(top_k_indices.shape, top_k_indices.max())
     R_H = call_cspmm.launch_sparseDenseMult_cpp(top_k_indices, top_k_values, V, N, M, K, H)
+    print("R_H :", R_H.shape)
     # A_H = torch.zeros_like(A)
-    A_L = A
-    A_L = A_L.scatter(2, top_k_indices, 0)
+    A_L = A.scatter_(2, top_k_indices, 0)
     # A_L = A - A_H
     # print(A.shape)
     # print(top_k_indices.shape)
@@ -68,6 +69,7 @@ def cspmm(A, V):
     # A_L = A
     # A_L[:, :, top_k_indices] = 0
     R_L = torch.matmul(A_L.half(), V.half())
+    print("R_L :", R_L.shape)
     R = R_H + R_L
     # R = R_H
     return R
