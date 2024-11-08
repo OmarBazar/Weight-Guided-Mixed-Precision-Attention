@@ -64,7 +64,7 @@ __global__ void dummy(long* g_mat1cols, float* g_mat1values, float* g_mat2, int 
 }
 
 void launch_sparseDenseMult(torch::Tensor g_mat1cols, torch::Tensor g_mat1values, torch::Tensor g_mat2, int N, int M, int K, int H, torch::Tensor g_out){
-    int threads = 64;
+    int threads = 256;
     int blocks = N;
     sparseDenseMult<<<blocks, threads>>>(g_mat1cols.data_ptr<long>(), g_mat1values.data_ptr<float>(), g_mat2.data_ptr<float>(), N, M, K, H, g_out.data_ptr<float>());
 }

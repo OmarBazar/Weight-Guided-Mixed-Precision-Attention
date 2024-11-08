@@ -9,7 +9,7 @@ torch::Tensor launch_dummy_cpp(torch::Tensor g_mat1cols, torch::Tensor g_mat1val
     // TORCH_CHECK(a.device().is_cuda(), "Tensors must be on a CUDA device");
 
     // Allocate the output tensor
-    auto g_out = torch::empty_like(g_mat2);
+    auto g_out = torch::empty({H, N, M}, torch::TensorOptions().dtype(torch::kFloat).device(torch::kCUDA));
 
     // Call the CUDA function to perform the addition
     launch_dummy(g_mat1cols, g_mat1values, g_mat2, N, M, K, H, g_out);
