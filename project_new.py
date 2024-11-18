@@ -11,93 +11,72 @@ import sys
 
 # Q, k, V = D
 
-# Q = Q[0]
-# k = k[0]
-# V = V[0]
+# Q = Q
+# k = k
+# V = V
 
-# # Q = torch.randn_like(Q)
-# # k = torch.randn_like(k)
-# # V = torch.randn_like(V)
+# # # Q = torch.randn_like(Q)
+# # # k = torch.randn_like(k)
+# # # V = torch.randn_like(V)
 
-# # print(Q.dtype, Q.device)
+# # # print(Q.dtype, Q.device)
 
-# A = Q @ (torch.transpose(k, 1, 2))
-# A = torch.nn.functional.softmax(A, dim = 0)
+# A = Q @ (torch.transpose(k, 2, 3))
+# A = torch.nn.functional.softmax(A, dim = -1)
 
-# N = Q.shape[1]
-# M = Q.shape[2]
+# N = Q.shape[2]
+# M = Q.shape[3]
 # K = 3
-# H = Q.shape[0]
+# H = Q.shape[1]
 
-# print(N, M, K, H)
+# # print(N, M, K, H)
 
 
 # A = A.to('cuda')
 # V = V.to('cuda')
 
-# FOR RANDOM INPUT
-# N = 2048
-# M = 400
-# K = 3
-# H = 6
-# F = 1024
+# # FOR RANDOM INPUT
 
-# A = torch.rand((H, N, F), device="cuda", dtype=torch.float32)
-# V = torch.rand((H, F, M), device="cuda", dtype=torch.float32)
 
-# # # Profiling parameters
+
+
+# # # # Profiling parameters
 # num_warmup = 10
-# num_trials = 500
+# num_trials = 5
+
+# A = torch.load('tensorw.pt').to('cuda')
+# V = torch.load('tensorv.pt').to('cuda')
+
+# N = A.shape[2]
+# M = V.shape[3]
+# K = 3
+# H = A.shape[1]
 
 def cspmm(A, V):
-    # print(A.shape, V.shape)
-    N = A.shape[1]
-    M = V.shape[2]
+    N = A.shape[2]
+    M = V.shape[3]
+    F = V.shape[2]
     K = 3
-    H = A.shape[0]
-    top_k_values, top_k_indices = torch.topk(A, K, dim=2)
-    # print(top_k_indices.shape, top_k_indices.max())
-    R_H = call_cspmm.launch_sparseDenseMult_cpp(top_k_indices, top_k_values, V, N, M, K, H)
-    # print(top_k_indices.shape, top_k_indices2.max())
-    # print("R_H :", R_H.shape)
-    # # A_H = torch.zeros_like(A)
-    A_L = A.scatter_(2, top_k_indices, 0)
-    # # A_L = A - A_H
-    # # print(A.shape)
-    # # print(top_k_indices.shape)
-    # # print(top_k_indices)
-    # # depth_indices = torch.arange(A_L.shape[0]).view(-1, 1, 1)  # Shape [D, 1, 1]
-    # # row_indices = torch.arange(A_L.shape[1]).view(1, -1, 1)
-    # # A_L = A
-    # # A_L[:, :, top_k_indices] = 0
-    R_L = torch.matmul(A_L.half(), V.half())
-    # print("R_L :", R_L.shape)
+    H = A.shape[1]
+    top_k_values, top_k_indices = torch.topk(A, K, dim=3)
+    R_H = call_cspmm.launch_sparseDenseMult_cpp(top_k_indices, top_k_values, V, N, M, F, K, H)
+    A_L = A.scatter(3, top_k_indices, 0)
+    R_L = A_L.half() @ V.half()
     R = R_H + R_L
-    # R = R_H
     return R
 
 def cspmm2(A, V):
-    N = A.shape[1]
-    M = V.shape[2]
+    N = A.shape[2]
+    M = V.shape[3]
+    F = V.shape[2]
     K = 3
-    H = A.shape[0]
-    top_k_values, top_k_indices = torch.topk(A, K, dim=2)
-    # print(top_k_values.shape)
-    R_H = call_dummy.launch_dummy_cpp(top_k_indices, top_k_values, V, N, M, K, H)
-    # A_H = torch.zeros_like(A)
-    A_L = A
-    A_L = A_L.scatter(2, top_k_indices, 0)
-    # A_L = A - A_H
-    # print(A.shape)
-    # print(top_k_indices.shape)
-    # print(top_k_indices)
-    # depth_indices = torch.arange(A_L.shape[0]).view(-1, 1, 1)  # Shape [D, 1, 1]
-    # row_indices = torch.arange(A_L.shape[1]).view(1, -1, 1)
-    # A_L = A
-    # A_L[:, :, top_k_indices] = 0
+    H = A.shape[1]
+    top_k_values, top_k_indices = torch.topk(A, K, dim=3)
+    R_H = call_dummy.launch_dummy_cpp(top_k_indices, top_k_values, V, N, M, F, K, H)
+    # print("R_H", R_H)
+    A_L = A.scatter(3, top_k_indices, 0)
     R_L = torch.matmul(A_L.half(), V.half())
     R = R_H + R_L
-    # R = R_H
     return R
 
 # def profile_low_precision_mm():
@@ -130,13 +109,13 @@ def cspmm2(A, V):
 
 # def profile_cspmm():
 #     for _ in range(num_warmup):
-#         R_sparse = cspmm(A, V)
+#         cspmm(A, V)
 #     torch.cuda.synchronize()
 
 #     times = []
 #     for _ in range(num_trials):
 #         start_time = time.time()
-#         R_sparse = cspmm(A, V)
+#         cspmm(A, V)
 #         torch.cuda.synchronize()
 #         times.append(time.time() - start_time)
 
@@ -144,13 +123,13 @@ def cspmm2(A, V):
 
 # def profile_dummy():
 #     for _ in range(num_warmup):
-#         R_sparse = cspmm2(A, V)
+#         cspmm2(A, V)
 #     torch.cuda.synchronize()
 
 #     times = []
 #     for _ in range(num_trials):
 #         start_time = time.time()
-#         R_sparse = cspmm2(A, V)
+#         cspmm2(A, V)
 #         torch.cuda.synchronize()
 #         times.append(time.time() - start_time)
 
@@ -164,31 +143,58 @@ def cspmm2(A, V):
 # print("Done High")
 # cspmm_time = profile_cspmm()
 # print("Done Cspmm")
-# dummy_time = profile_dummy()
-# print("Done Dummy")
+# # dummy_time = profile_dummy()
+# # print("Done Dummy")
 
 # # Print results
 # print(f"Average Time for Low Precision Matrix Multiplication: {low_precision_mm_time:.6f} seconds")
 # print(f"Average Time for High Precision Matrix Multiplication: {high_precision_mm_time:.6f} seconds")
 # print(f"Average Time for sparseDenseMult: {cspmm_time:.6f} seconds")
-# print(f"Average Time for dummy: {dummy_time:.6f} seconds")
+# # print(f"Average Time for dummy: {dummy_time:.6f} seconds")
+# N = 16
+# M = 4
+# K = 3
+# H = 4
+# F = N
 
-# R_dense = torch.matmul(A, V)
-# R_sparse = cspmm(A, V)
+# for i in range(1):
+#     A = torch.rand((1, H, N, F), device="cuda", dtype=torch.float32)
+#     # A = torch.nn.functional.softmax(A, dim = -1)
+#     # print(A.shape)
+#     V = torch.ones((1, H, F, M), device="cuda", dtype=torch.float32) #- torch.ones((1, H, F, M), device="cuda", dtype=torch.float32)/2
+#     # V = torch.zeros((1, H, F, M), device="cuda", dtype=torch.float32)
+#     # A = torch.zeros((1, H, N, F), device="cuda", dtype=torch.float32)
 
-# R_equal = torch.isclose(R_sparse, R_dense, rtol=1e-02)
-# equal = True
-# for h in range(H):
-#     print(h)
-#     for n in range(N):
-#         for m in range(M):
-#             if R_equal[h][n][m]==False:
-#                 print(h,n,m)
-#                 print(R_sparse[h][n][m], R_dense[h][n][m])
-#                 equal=False
+#     # print(V)
+
+#     # A = torch.load('tensorw.pt').to('cuda')
+#     # V = torch.load('tensorv.pt').to('cuda')
+#     # print(A)
+#     # print(V)
+#     R_dense = A @ V
+#     R_sparse = cspmm2(A, V)
+
+#     # print(A)
+#     # print(V)
+
+#     # print(R_dense)
+#     print(R_sparse.shape)
+#     # print(A[0, 0, 1, :], V[0, 0, :, 0])
+#     # print(R_dense[0, 0, 1, 0])
+
+#     R_equal = torch.isclose(R_sparse, R_dense, atol=1e-01)
+#     equal = torch.all(R_equal)
+#     equal = True
+#     for h in range(H):
+#         for n in range(N):
+#             for m in range(M):
+#                 if R_equal[0][h][n][m]==False:
+#                     print(h,n,m)
+#                     print(R_sparse[0][h][n][m], R_dense[0][h][n][m])
+#                     equal=False
+#                     break
+#             if not equal:
 #                 break
 #         if not equal:
 #             break
-#     if not equal:
-#         break
-# print("R_sparse = R_dense: ", equal)
+#     print("R_sparse = R_dense: ", equal)
